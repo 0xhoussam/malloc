@@ -5,32 +5,41 @@
 #include <unistd.h>
 
 chunk_header_t *chunks = NULL;
+block_header_t *free_list = NULL;
 
 void *malloc(size_t len) {
-  int page_size;
-  chunk_header_t page_header;
-  block_header_t block_header;
+  block_header_t block_header = {
+      .size = len,
+      .is_free= false,
+      .next = NULL,
+  };
 
-  page_size = getpagesize();
-  if (chunks == NULL) {
-    void *memory =
-        mmap(0, page_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    if (memory == MAP_FAILED)
-      return NULL;
-
-    page_header.size = page_size;
-    page_header.used =
-        sizeof(chunk_header_t) + sizeof(block_header_t) + len;
-    page_header.next = NULL;
-    ft_memmove(memory, &page_header, sizeof(page_header));
-    chunks = memory;
-
-    block_header.is_free = false;
-    block_header.size = len;
-    block_header.next = NULL;
-    ft_memmove((chunk_header_t *)memory + 1, &block_header, sizeof(block_header_t));
-    return (block_header_t *)((chunk_header_t *)memory + 1) + 1;
+  if (!chunks && (get_more_memory(len + sizeof(block_header_t))) == NULL) {
+    return NULL;
   }
-  return mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0,
-              0);
+
+  block_header_t *free_block = get_firt_fit_from_free_list(len);
+  if (free_block)
+    return (free_block + 1);
+  if (chunks->size - chunks->used < len + sizeof(block_header) && (get_more_memory(len)) == MAP_FAILED) {
+    return NULL;
+  }
+  char *available_space = (char *)chunks + chunks->used;
+  chunks->used += len + sizeof( block_header_t);
+  ft_memmove(available_space, &block_header, sizeof(block_header_t));
+  return ((block_header_t *)available_space) + 1;
+}
+
+void free(void *ptr) {
+    block_header_t *header = (block_header_t *)ptr - 1;
+    header->is_free = true;
+    header->next = free_list;
+    free_list = header;
+}
+
+int main() {
+    char *ptr = malloc(12);
+    ft_memmove(ptr, "hello world\n", sizeof("hello world\n"));
+    printf("%s\n", ptr);
+    free(ptr);
 }

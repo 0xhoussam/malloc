@@ -1,4 +1,10 @@
 #include <stddef.h>
+#include <math.h>
+#include <unistd.h>
+#include "malloc.h"
+
+extern chunk_header_t *chunks;
+extern block_header_t *free_list;
 
 void	*ft_memcpy(void *dst, const void *src, size_t n)
 {
@@ -45,3 +51,41 @@ void	*ft_memmove(void *dst, const void *src, size_t len)
 	return (dst);
 }
 
+static inline size_t get_actual_mmap_size(size_t requested_len) {
+  int page_size = getpagesize();
+  return (ceil((double)requested_len / page_size)) * page_size;
+}
+
+static inline size_t get_total_mmap_needed_len(size_t requested_len) {
+    return requested_len + sizeof(block_header_t) + sizeof(chunk_header_t);
+}
+
+void *get_more_memory(size_t len) {
+    size_t total_len = len + sizeof(chunk_header_t);
+
+  chunk_header_t block_header = {
+      .size = get_actual_mmap_size(total_len), .next = chunks, .used = sizeof(chunk_header_t)};
+
+  char *chunk =
+      mmap(0, total_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+  if (chunk == MAP_FAILED)
+    return NULL;
+
+  ft_memmove(chunk, &block_header, sizeof(block_header_t));
+  chunks = (void *)chunk;
+  return chunk;
+}
+
+void *get_firt_fit_from_free_list(size_t len) {
+    block_header_t *tmp = free_list;
+
+    if (free_list == NULL) return NULL;
+    while (tmp) {
+        if (tmp->is_free && tmp->size >= len) {
+            tmp->is_free = false;
+            return tmp;
+        }
+        tmp = tmp->next;
+    }
+    return NULL;
+}

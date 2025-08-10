@@ -18,10 +18,14 @@ typedef struct block_header_s {
     struct block_header_s *next;
 } block_header_t;
 
-
 // libft
 
 void	*ft_memcpy(void *dst, const void *src, size_t n);
 void	*ft_memmove(void *dst, const void *src, size_t len);
+
+// utils
+
+void *get_more_memory(size_t len);
+void *get_firt_fit_from_free_list(size_t len);
 
 #endif // !MALLOC_H
