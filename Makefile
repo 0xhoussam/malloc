@@ -20,7 +20,7 @@ $(NAME): $(NAME_ARCH)
 	ln -s $(NAME_ARCH) $(NAME)
 
 $(NAME_ARCH): $(OBJ_FILES)
-	$(CC) --shared $(OBJ_FILES) -o $(NAME_ARCH)
+	$(CC) -fPIC --shared $(OBJ_FILES) -o $(NAME_ARCH) -lm
 
 $(OBJ_DIR)%.o: %.c
 	@mkdir -p $(dir $@)
@@ -31,7 +31,7 @@ build: all clean
 re: clean all
 
 fclean: clean
-	@rm -f $(NAME)
+	@rm -f $(NAME) $(NAME_ARCH)
 
 clean:
 	@rm -f $(OBJ_FILES)

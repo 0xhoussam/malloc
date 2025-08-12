@@ -1,7 +1,9 @@
 #include <stddef.h>
 #include <math.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "malloc.h"
+#include "sys/mman.h"
 
 extern chunk_header_t *chunks;
 extern block_header_t *free_list;
@@ -88,4 +90,27 @@ void *get_firt_fit_from_free_list(size_t len) {
         tmp = tmp->next;
     }
     return NULL;
+}
+
+bool check_if_chunk_free(chunk_header_t *chunk) {
+    size_t freed_size = 0;
+    size_t count = 0;
+
+    for (block_header_t *lst = free_list; lst; lst = lst->next) {
+        if (lst->is_free == false) return false;
+        freed_size += lst->size;
+        count++;
+    }
+    freed_size += count * sizeof(block_header_t);
+    printf("%li == %li", freed_size, chunk->size - sizeof(chunk_header_t));
+    return freed_size == chunk->size - sizeof(chunk_header_t) ? true : false;
+}
+
+void unmap_pages_if_unused() {
+    for (chunk_header_t *chunk = chunks; chunk; chunk = chunk->next) {
+        if (check_if_chunk_free(chunk) == true) {
+            printf("unmapping a page");
+            munmap(chunk, chunk->size);
+        }
+    }
 }

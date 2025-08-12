@@ -46,10 +46,6 @@ void free(void *ptr) {
   header->is_free = true;
   header->next = free_list;
   free_list = header;
+  unmap_pages_if_unused();
   pthread_mutex_unlock(&malloc_lock);
-}
-
-int main() {
-  char *ptr = malloc(12);
-  free(ptr);
 }
