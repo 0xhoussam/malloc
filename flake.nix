@@ -35,11 +35,20 @@
                 packages =
                   with pkgs;
                   [
-                    gcc15
+                    gcc
                     clang-tools
                     compiledb
+                    patchelf
                   ]
-                  ++ (if system == "aarch64-darwin" then [ ] else [ gdb gf ]);
+                  ++ (
+                    if system == "aarch64-darwin" then
+                      [ ]
+                    else
+                      [
+                        gdb
+                        gf
+                      ]
+                  );
               };
         }
       );

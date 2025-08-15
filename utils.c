@@ -78,13 +78,15 @@ void *get_more_memory(size_t len) {
   return chunk;
 }
 
-void *get_firt_fit_from_free_list(size_t len) {
+void *get_first_fit_from_free_list(size_t len) {
     block_header_t *tmp = free_list;
 
     if (free_list == NULL) return NULL;
     while (tmp) {
+        // printf("hello\n");
         if (tmp->is_free && tmp->size >= len) {
             tmp->is_free = false;
+            split_block_if_needed(tmp, len);
             return tmp;
         }
         tmp = tmp->next;
@@ -102,7 +104,6 @@ bool check_if_chunk_free(chunk_header_t *chunk) {
         count++;
     }
     freed_size += count * sizeof(block_header_t);
-    printf("%li == %li", freed_size, chunk->size - sizeof(chunk_header_t));
     return freed_size == chunk->size - sizeof(chunk_header_t) ? true : false;
 }
 
@@ -113,4 +114,22 @@ void unmap_pages_if_unused() {
             munmap(chunk, chunk->size);
         }
     }
+}
+
+size_t align_up(size_t size, size_t alignment) {
+    return (size + alignment - 1) & ~(alignment - 1);
+}
+
+void split_block_if_needed(block_header_t *block, size_t size) {
+    if (block->size <= size + sizeof(block_header_t))
+        return;
+
+    block_header_t b = {
+        .is_free = true,
+        .size = block->size - size - sizeof(block_header_t),
+        .next = free_list,
+    };
+    ft_memmove((char *)block + size, &b, sizeof(b));
+    block->size -= size + sizeof(block_header_t);
+    return;
 }

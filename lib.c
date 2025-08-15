@@ -21,7 +21,7 @@ void *malloc(size_t len) {
     return NULL;
   }
 
-  block_header_t *free_block = get_firt_fit_from_free_list(len);
+  block_header_t *free_block = get_first_fit_from_free_list(len);
   if (free_block) {
     pthread_mutex_unlock(&malloc_lock);
     return (free_block + 1);
@@ -41,6 +41,8 @@ void *malloc(size_t len) {
 }
 
 void free(void *ptr) {
+  if (!ptr)
+    return;
   pthread_mutex_lock(&malloc_lock);
   block_header_t *header = (block_header_t *)ptr - 1;
   header->is_free = true;

@@ -9,7 +9,7 @@ NAME=libft_malloc.so
 NAME_ARCH=libft_malloc_$(HOSTTYPE).so
 
 CFILES = lib.c utils.c
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -fPIC
 
 OBJ_DIR= ./.obj/
 OBJ_FILES=$(addprefix $(OBJ_DIR), $(patsubst %.c, %.o, $(CFILES)))
@@ -17,7 +17,7 @@ OBJ_FILES=$(addprefix $(OBJ_DIR), $(patsubst %.c, %.o, $(CFILES)))
 all: $(NAME)
 
 $(NAME): $(NAME_ARCH)
-	ln -s $(NAME_ARCH) $(NAME)
+	ln -sf $(NAME_ARCH) $(NAME)
 
 $(NAME_ARCH): $(OBJ_FILES)
 	$(CC) -fPIC --shared $(OBJ_FILES) -o $(NAME_ARCH) -lm
