@@ -27,17 +27,21 @@ void *malloc(size_t len) {
     return (free_block + 1);
   }
 
-  if (chunks->size - chunks->used < len + sizeof(block_header) &&
-      (get_more_memory(len)) == MAP_FAILED) {
+  chunk_header_t *available_chunk =
+      look_for_chunk_with_available_size(len + sizeof(block_header));
+  if (available_chunk) {
+    void *ptr = place_block_in_chunk(available_chunk, len);
+    pthread_mutex_unlock(&malloc_lock);
+    return ptr;
+  }
+
+  if (get_more_memory(len) == MAP_FAILED) {
     pthread_mutex_unlock(&malloc_lock);
     return NULL;
   }
-  char *available_space = (char *)chunks + chunks->used;
-  chunks->used += len + sizeof(block_header_t);
-  ft_memmove(available_space, &block_header, sizeof(block_header_t));
-
+  void *ptr = place_block_in_chunk(chunks, len);
   pthread_mutex_unlock(&malloc_lock);
-  return ((block_header_t *)available_space) + 1;
+  return ptr;
 }
 
 void free(void *ptr) {
@@ -48,6 +52,29 @@ void free(void *ptr) {
   header->is_free = true;
   header->next = free_list;
   free_list = header;
-  unmap_pages_if_unused();
+  header->owner_chunk->allocation_count -= 1;
+  if (header->owner_chunk->allocation_count == 0) {
+    remove_chunk_from_chunk_list(header->owner_chunk);
+    munmap(header->owner_chunk, header->owner_chunk->size);
+  }
   pthread_mutex_unlock(&malloc_lock);
+}
+
+void *realloc(void *ptr, size_t size) {
+  block_header_t *header;
+  void *new_ptr;
+  if (ptr == NULL) {
+    return malloc(size);
+  }
+
+  header = (block_header_t *)ptr - 1;
+  if (header->size >= size) {
+    return ptr;
+  }
+  new_ptr = malloc(size);
+  if (!new_ptr)
+    return NULL;
+  ft_memmove(new_ptr, ptr, header->size);
+  free(ptr);
+  return new_ptr;
 }

@@ -1,0 +1,32 @@
+[
+ {
+  "directory": "/home/pride/42/malloc",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-fPIC",
+   "-c",
+   "lib.c",
+   "-o",
+   ".obj/lib.o"
+  ],
+  "file": "lib.c"
+ },
+ {
+  "directory": "/home/pride/42/malloc",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-fPIC",
+   "-c",
+   "utils.c",
+   "-o",
+   ".obj/utils.o"
+  ],
+  "file": "utils.c"
+ }
+]
