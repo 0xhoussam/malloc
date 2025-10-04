@@ -35,7 +35,7 @@ void *malloc(size_t len) {
     return ptr;
   }
 
-  if (get_more_memory(len) == MAP_FAILED) {
+  if (get_more_memory(len + sizeof(block_header_t)) == MAP_FAILED) {
     pthread_mutex_unlock(&malloc_lock);
     return NULL;
   }

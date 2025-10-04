@@ -56,12 +56,14 @@ static inline size_t get_actual_mmap_size(size_t requested_len) {
 
 void *get_more_memory(size_t len) {
   size_t total_len = len + sizeof(chunk_header_t);
+  size_t actual_len = get_actual_mmap_size(total_len);
 
-  chunk_header_t block_header = {.size = get_actual_mmap_size(total_len),
+  chunk_header_t block_header = {.size = actual_len,
                                  .next = chunks,
-                                 .used = sizeof(chunk_header_t)};
+                                 .used = sizeof(chunk_header_t),
+                                 .allocation_count = 0};
 
-  char *chunk = mmap(0, total_len, PROT_READ | PROT_WRITE,
+  char *chunk = mmap(0, actual_len, PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
   if (chunk == MAP_FAILED)
     return NULL;
@@ -77,7 +79,6 @@ void *get_first_fit_from_free_list(size_t len) {
   if (free_list == NULL)
     return NULL;
   while (tmp) {
-    // printf("hello\n");
     if (tmp->is_free && tmp->size >= len) {
       tmp->is_free = false;
       split_block_if_needed(tmp, len);
@@ -86,20 +87,6 @@ void *get_first_fit_from_free_list(size_t len) {
     tmp = tmp->next;
   }
   return NULL;
-}
-
-bool check_if_chunk_free(chunk_header_t *chunk) {
-  size_t freed_size = 0;
-  size_t count = 0;
-
-  for (block_header_t *lst = free_list; lst; lst = lst->next) {
-    if (lst->is_free == false)
-      return false;
-    freed_size += lst->size;
-    count++;
-  }
-  freed_size += count * sizeof(block_header_t);
-  return freed_size == chunk->size - sizeof(chunk_header_t) ? true : false;
 }
 
 size_t align_up(size_t size, size_t alignment) {
@@ -114,8 +101,9 @@ void split_block_if_needed(block_header_t *block, size_t size) {
       .is_free = true,
       .size = block->size - size - sizeof(block_header_t),
       .next = free_list,
+      .owner_chunk = block->owner_chunk
   };
-  ft_memmove((char *)block + size, &b, sizeof(b));
+  ft_memmove((char *)block + size + sizeof(block_header_t), &b, sizeof(b));
   block->size -= size + sizeof(block_header_t);
   return;
 }
@@ -123,7 +111,7 @@ void split_block_if_needed(block_header_t *block, size_t size) {
 void remove_chunk_from_chunk_list(chunk_header_t *chunk) {
   chunk_header_t *curr, *prev = NULL;
 
-  if (!chunk || chunks)
+  if (!chunk || !chunks)
     return;
   if (chunk == chunks) {
     chunks = chunks->next;
@@ -150,15 +138,16 @@ chunk_header_t *look_for_chunk_with_available_size(size_t size) {
 }
 
 void *place_block_in_chunk(chunk_header_t *chunk, size_t len) {
-    block_header_t block = {
-        .owner_chunk = chunk,
-        .is_free = false,
-        .size = len,
-        .next = NULL,
-    };
-    char *available_space = (char *)chunk + chunk->used;
-    chunks->used += len + sizeof(block_header_t);
-    ft_memmove(available_space, &block, sizeof(block));
+  block_header_t block = {
+      .owner_chunk = chunk,
+      .is_free = false,
+      .size = len,
+      .next = NULL,
+  };
+  char *available_space = (char *)chunk + chunk->used;
+  chunk->used += len + sizeof(block_header_t);
+  chunk->allocation_count += 1;
+  ft_memmove(available_space, &block, sizeof(block));
 
-    return (block_header_t *)available_space + 1;
+  return (block_header_t *)available_space + 1;
 }

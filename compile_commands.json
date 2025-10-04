@@ -1,6 +1,6 @@
 [
  {
-  "directory": "/home/pride/42/malloc",
+  "directory": "/home/pride/projects/malloc",
   "arguments": [
    "gcc",
    "-Wall",
@@ -15,7 +15,7 @@
   "file": "lib.c"
  },
  {
-  "directory": "/home/pride/42/malloc",
+  "directory": "/home/pride/projects/malloc",
   "arguments": [
    "gcc",
    "-Wall",

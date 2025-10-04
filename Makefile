@@ -26,6 +26,9 @@ $(OBJ_DIR)%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+test: $(NAME) main.c
+	gcc -L. -lft_malloc -Wl,-rpath, main.c -o main
+
 build: all clean
 
 re: clean all
@@ -36,3 +39,4 @@ fclean: clean
 clean:
 	@rm -f $(OBJ_FILES)
 	@rm -rf $(OBJ_DIR)
+	@rm -f main
