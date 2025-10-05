@@ -9,7 +9,7 @@ NAME=libft_malloc.so
 NAME_ARCH=libft_malloc_$(HOSTTYPE).so
 
 CFILES = lib.c utils.c
-CFLAGS = -Wall -Wextra -Werror -fPIC
+CFLAGS = -Wall -g -Wextra  -fPIC -O0
 
 OBJ_DIR= ./.obj/
 OBJ_FILES=$(addprefix $(OBJ_DIR), $(patsubst %.c, %.o, $(CFILES)))
@@ -27,7 +27,7 @@ $(OBJ_DIR)%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test: $(NAME) main.c
-	gcc -L. -lft_malloc -Wl,-rpath, main.c -o main
+	gcc -O0 -g -L. -lft_malloc -Wl,-rpath, main.c -o main
 
 build: all clean
 

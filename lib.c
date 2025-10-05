@@ -24,6 +24,7 @@ void *malloc(size_t len) {
   block_header_t *free_block = get_first_fit_from_free_list(len);
   if (free_block) {
     pthread_mutex_unlock(&malloc_lock);
+    printf("returning free block\n");
     return (free_block + 1);
   }
 
@@ -54,6 +55,7 @@ void free(void *ptr) {
   free_list = header;
   header->owner_chunk->allocation_count -= 1;
   if (header->owner_chunk->allocation_count == 0) {
+    remove_chunk_block_from_free_list(header->owner_chunk);
     remove_chunk_from_chunk_list(header->owner_chunk);
     munmap(header->owner_chunk, header->owner_chunk->size);
   }

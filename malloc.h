@@ -37,5 +37,6 @@ void split_block_if_needed(block_header_t *block, size_t size);
 void remove_chunk_from_chunk_list(chunk_header_t *chunk);
 chunk_header_t *look_for_chunk_with_available_size(size_t size);
 void *place_block_in_chunk(chunk_header_t *chunk, size_t len);
+void remove_chunk_block_from_free_list(chunk_header_t *chunk);
 
 #endif // !MALLOC_H

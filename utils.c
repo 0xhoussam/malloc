@@ -129,6 +129,25 @@ void remove_chunk_from_chunk_list(chunk_header_t *chunk) {
   return;
 }
 
+void remove_chunk_block_from_free_list(chunk_header_t *chunk) {
+    block_header_t *prev = NULL, *curr = free_list;
+
+    if (!chunk) return;
+    while (curr) {
+        if (curr->owner_chunk != chunk) {
+            curr = curr->next;
+            continue;
+        };
+        if (prev == NULL) {
+            free_list = curr->next;
+            curr = free_list;
+            continue;
+        }
+        prev->next = curr->next;
+        curr = curr->next;
+    }
+}
+
 chunk_header_t *look_for_chunk_with_available_size(size_t size) {
   for (chunk_header_t *chunk = chunks; chunk; chunk = chunk->next) {
     if (chunk->size - chunk->used >= size)
