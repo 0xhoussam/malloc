@@ -24,7 +24,6 @@ void *malloc(size_t len) {
   block_header_t *free_block = get_first_fit_from_free_list(len);
   if (free_block) {
     pthread_mutex_unlock(&malloc_lock);
-    printf("returning free block\n");
     return (free_block + 1);
   }
 
