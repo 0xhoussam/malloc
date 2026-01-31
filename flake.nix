@@ -39,6 +39,7 @@
                     clang-tools
                     compiledb
                     patchelf
+                    nnd
                   ]
                   ++ (
                     if system == "aarch64-darwin" then
