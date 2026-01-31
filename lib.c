@@ -10,12 +10,11 @@ block_header_t *free_list = NULL;
 pthread_mutex_t malloc_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void *malloc(size_t len) {
-  block_header_t block_header = {
-      .size = len,
-      .is_free = false,
-      .next = NULL,
-  };
+  if (len == 0)
+    return NULL;
   pthread_mutex_lock(&malloc_lock);
+  len = align_up(len, ALIGNMENT);
+
   if (!chunks && (get_more_memory(len + sizeof(block_header_t))) == NULL) {
     pthread_mutex_unlock(&malloc_lock);
     return NULL;
@@ -28,18 +27,20 @@ void *malloc(size_t len) {
   }
 
   chunk_header_t *available_chunk =
-      look_for_chunk_with_available_size(len + sizeof(block_header));
+      look_for_chunk_with_available_size(len + sizeof(block_header_t));
   if (available_chunk) {
     void *ptr = place_block_in_chunk(available_chunk, len);
     pthread_mutex_unlock(&malloc_lock);
     return ptr;
   }
 
-  if (get_more_memory(len + sizeof(block_header_t)) == MAP_FAILED) {
+  chunk_header_t *test = get_more_memory(len + sizeof(block_header_t));
+  if (test == NULL) {
     pthread_mutex_unlock(&malloc_lock);
     return NULL;
   }
-  void *ptr = place_block_in_chunk(chunks, len);
+  void *ptr =
+      place_block_in_chunk(test, len); // pthread_mutex_unlock(&malloc_lock);
   pthread_mutex_unlock(&malloc_lock);
   return ptr;
 }
@@ -49,9 +50,10 @@ void free(void *ptr) {
     return;
   pthread_mutex_lock(&malloc_lock);
   block_header_t *header = (block_header_t *)ptr - 1;
-  header->is_free = true;
+
   header->next = free_list;
   free_list = header;
+
   header->owner_chunk->allocation_count -= 1;
   if (header->owner_chunk->allocation_count == 0) {
     remove_chunk_block_from_free_list(header->owner_chunk);
@@ -69,7 +71,9 @@ void *realloc(void *ptr, size_t size) {
   }
 
   header = (block_header_t *)ptr - 1;
-  if (header->size >= size) {
+  if (header->size == size)
+    return ptr;
+  if (header->size > size) {
     return ptr;
   }
   new_ptr = malloc(size);

@@ -3,7 +3,10 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/mman.h>
+
+#define ALIGNMENT 16
 
 typedef struct chunk_header_s {
   size_t size;
@@ -14,9 +17,9 @@ typedef struct chunk_header_s {
 
 typedef struct block_header_s {
   size_t size;
-  bool is_free;
   chunk_header_t *owner_chunk;
   struct block_header_s *next;
+  uint64_t __padding__;
 } block_header_t;
 
 void *malloc(size_t len);
