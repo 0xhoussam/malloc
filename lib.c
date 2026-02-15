@@ -50,15 +50,16 @@ void free(void *ptr) {
     return;
   pthread_mutex_lock(&malloc_lock);
   block_header_t *header = (block_header_t *)ptr - 1;
+  chunk_header_t *chunk = header->owner_chunk;
 
-  header->next = free_list;
-  free_list = header;
-
-  header->owner_chunk->allocation_count -= 1;
-  if (header->owner_chunk->allocation_count == 0) {
-    remove_chunk_block_from_free_list(header->owner_chunk);
-    remove_chunk_from_chunk_list(header->owner_chunk);
-    munmap(header->owner_chunk, header->owner_chunk->size);
+  chunk->allocation_count -= 1;
+  if (chunk->allocation_count == 0) {
+    remove_chunk_block_from_free_list(chunk);
+    remove_chunk_from_chunk_list(chunk);
+    munmap(chunk, chunk->size);
+  } else {
+    header->next = free_list;
+    free_list = header;
   }
   pthread_mutex_unlock(&malloc_lock);
 }

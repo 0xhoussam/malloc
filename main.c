@@ -5,15 +5,17 @@
 
 
 int main() {
-    int n = 100;
+    int n = 10000;
     void *ptr[n] = {};
     int sizes[n] = {};
     bzero(ptr, n * sizeof(void *));
     for (int i= 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            sizes[j] = random() % 100000; 
+            sizes[j] = (random() % 100) + 1; 
             ptr[j] = malloc(sizes[j]);
-            bzero(ptr[j], sizes[j]);
+            sizes[j] += 50;
+            ptr[j] = realloc(ptr[j], sizes[j]);
+            // bzero(ptr[j], sizes[j]);
         }
         for (int j = 0; j < n; j++) {
             if (ptr[j])
